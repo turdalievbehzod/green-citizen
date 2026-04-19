@@ -2,11 +2,13 @@ import logging
 from datetime import timedelta
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.shared.models import BaseModel, Language
+from apps.users.models.permissions import Role, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,10 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     """
     Custom user model with flexible authentication fields
     """
+    roles = models.ManyToManyField(
+        Role,
+        related_name='users'
+    )
 
     phone_number = models.CharField(
         max_length=20, unique=True, db_index=True
@@ -99,6 +105,49 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
             'expires_at': expires_at.isoformat(),
             'refresh_expires_at': refresh_expires_at.isoformat(),
         }
+
+    def has_permission(self, permission_codename):
+        """Check if user has a specific permission (with caching)"""
+        if self.is_superuser:
+            return True
+
+        # Check cache first
+        cache_key = f'user_{self.id}_perms'
+        cached_perms = cache.get(cache_key)
+
+        if cached_perms is None:
+            cached_perms = self._load_permissions()
+            cache.set(cache_key, cached_perms, timeout=None)
+
+        return permission_codename in cached_perms
+
+    def _load_permissions(self):
+        """Load all permission codenames from database"""
+        perms = set()
+        for role in self.roles.filter(is_active=True):
+            for perm in role.get_all_permissions():
+                perms.add(perm.codename)
+        for perm in self.user_permissions_direct.all():
+            perms.add(perm.permission.codename)
+        return perms
+
+    def get_all_permissions_list(self):
+        """
+        Get all permissions from all active roles
+        Returns a list of Permission objects
+        """
+        if self.is_superuser:
+            return list(Permission.objects.all())
+
+        all_perms = set()
+        for role in self.roles.filter(is_active=True):
+            all_perms.update(role.get_all_permissions())
+        return list(all_perms)
+
+    def clear_permission_cache(self):
+        """Clear cached permissions"""
+        cache_key = f'user_{self.id}_perms'
+        cache.delete(cache_key)
 
     class Meta:
         db_table = 'users'
