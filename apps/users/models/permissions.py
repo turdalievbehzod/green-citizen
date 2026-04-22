@@ -29,9 +29,9 @@ class Permission(BaseModel):
             perms.extend(child.get_all_permissions())
         return perms
 
+
 class Endpoint(BaseModel):
     """Store all API endpoints in database"""
-
     HTTP_METHODS = [
         ('GET', 'GET'),
         ('POST', 'POST'),
@@ -39,7 +39,6 @@ class Endpoint(BaseModel):
         ('PATCH', 'PATCH'),
         ('DELETE', 'DELETE'),
     ]
-
     ACCESS_TYPES = [
         ('public', 'Public'),  # Anyone can access (no authentication)
         ('authenticated', 'Authenticated'),  # Any authenticated user can access
@@ -76,17 +75,16 @@ class Endpoint(BaseModel):
     @classmethod
     def check_access(cls, user, path, method):
         """Check if user can access this endpoint"""
-
         if user.is_superuser:
             return True
 
         # Try to find matching endpoint
+
         endpoint = cls.objects.filter(
             path=path,
             method=method.upper(),
             is_active=True
         ).select_related('permission').first()
-
         # If endpoint not found or no permission required, allow access
         if not endpoint or not endpoint.permission:
             return False
@@ -97,7 +95,6 @@ class Endpoint(BaseModel):
 
 class Role(BaseModel):
     """Roles that group permissions"""
-
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     permissions = models.ManyToManyField(Permission, related_name='roles')

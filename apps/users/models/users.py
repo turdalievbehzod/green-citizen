@@ -27,7 +27,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username=None, password=None, **extra_fields):
+    def create_superuser(self, phone_number=None, password=None, **extra_fields):
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -37,7 +37,7 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is False:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self.create_user(username, password, **extra_fields)
+        return self.create_user(phone_number, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
@@ -148,6 +148,16 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         """Clear cached permissions"""
         cache_key = f'user_{self.id}_perms'
         cache.delete(cache_key)
+
+    @staticmethod
+    def generate_verification_code(length=6):
+        """Generate a random verification code consisting of digits."""
+        import random
+        import string
+
+        characters = string.digits
+        verification_code = ''.join(random.choice(characters) for _ in range(length))
+        return verification_code
 
     class Meta:
         db_table = 'users'

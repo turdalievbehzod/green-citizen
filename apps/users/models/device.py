@@ -139,8 +139,6 @@ class Device(BaseModel):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="devices",
         db_index=True
     )
