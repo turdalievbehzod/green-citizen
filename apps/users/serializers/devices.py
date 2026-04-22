@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from apps.users.models.device import Device
 
-
 class UserDeviceCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
@@ -14,12 +13,32 @@ class UserDeviceCreateSerializer(serializers.ModelSerializer):
             'app_version'
         ]
 
+    def validate(self, attrs):
+        user = self.context['request'].user
 
-class UserDeviceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Device
-        fields = [
-            'id', 'uuid', 'created_at', 'updated_at',
-            'device_id', 'device_type', 'device_model',
-            'operation_version', 'last_login', 'app_version'
-        ]
+        if Device.objects.filter(
+            user=user,
+            device_id=attrs.get('device_id'),
+            is_active=True
+        ).exists():
+            raise serializers.ValidationError({
+                "device_id": "Device already registered"
+            })
+
+        return attrs
+
+    def validate_refresh_token_jti(self, value):
+        if Device.objects.filter(refresh_token_jti=value).exists():
+            raise serializers.ValidationError("Duplicate token")
+        return value
+
+    def validate_firebase_token(self, value):
+        if value and Device.objects.filter(firebase_token=value).exists():
+            raise serializers.ValidationError("Firebase token already used")
+        return value
+
+    def validate_refresh_token_expires_at(self, value):
+        from django.utils import timezone
+        if value and value <= timezone.now():
+            raise serializers.ValidationError("Expiry must be in future")
+        return value

@@ -61,11 +61,30 @@ class UserDeviceListCreateAPIView(ListCreateAPIView):
         )
 
 
+from django.shortcuts import get_object_or_404
+
 class UserDeviceDestroyAPIView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        pass
+        device_id = self.kwargs.get("pk")
+
+        return get_object_or_404(
+            self.request.user.devices,
+            id=device_id,
+            is_active=True
+        )
 
     def destroy(self, request, *args, **kwargs):
-        pass
+        device = self.get_object()
+
+        # Optional: soft delete instead of hard delete
+        device.is_active = False
+        device.save()
+
+        return CustomResponse.success(
+            message_key="SUCCESS",
+            data={"id": device.id},
+            request=request,
+            status_code=status.HTTP_200_OK
+        )
