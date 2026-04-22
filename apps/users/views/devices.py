@@ -12,8 +12,7 @@ class UserDeviceListCreateAPIView(ListCreateAPIView):
     pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
-        devices = self.request.user.devices.filter(is_active=True)
-        return devices
+        return self.request.user.devices.filter(is_active=True)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -28,14 +27,14 @@ class UserDeviceListCreateAPIView(ListCreateAPIView):
             serializer = self.get_serializer(page, many=True)
             paginated_data = self.get_paginated_response(serializer.data)
             return CustomResponse.success(
-                message_key="SUCCESS",
+                message_key="DEVICE_LIST_SUCCESS",
                 data=paginated_data,
                 request=request
             )
 
         serializer = self.get_serializer(queryset, many=True)
         return CustomResponse.success(
-            message_key="SUCCESS",
+            message_key="DEVICE_LIST_SUCCESS",
             data=serializer.data,
             request=request,
             status_code=status.HTTP_200_OK
@@ -47,21 +46,22 @@ class UserDeviceListCreateAPIView(ListCreateAPIView):
         if serializer.is_valid():
             serializer.save(user=request.user)
             return CustomResponse.success(
-                message_key="SUCCESS",
+                message_key="DEVICE_CREATED",
                 data=serializer.data,
                 request=request,
                 status_code=status.HTTP_201_CREATED
             )
 
         return CustomResponse.error(
-            message_key="VALIDATION_ERROR",
-            errors=str(serializer.errors),
+            message_key="DEVICE_VALIDATION_FAILED",
+            errors=serializer.errors,
             request=request,
             status_code=status.HTTP_400_BAD_REQUEST
         )
 
 
 from django.shortcuts import get_object_or_404
+
 
 class UserDeviceDestroyAPIView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
@@ -78,12 +78,11 @@ class UserDeviceDestroyAPIView(DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         device = self.get_object()
 
-        # Optional: soft delete instead of hard delete
         device.is_active = False
         device.save()
 
         return CustomResponse.success(
-            message_key="SUCCESS",
+            message_key="DEVICE_DEACTIVATED",
             data={"id": device.id},
             request=request,
             status_code=status.HTTP_200_OK
