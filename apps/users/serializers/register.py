@@ -1,9 +1,12 @@
+from datetime import timedelta
+from time import timezone
+
 import phonenumbers
 from rest_framework import serializers
 
 from apps.shared.exceptions.custom_exceptions import CustomException
 from apps.shared.models import Language
-from apps.users.models.users import User
+from apps.users.models.users import User, VerificationCode
 from apps.users.utils.generate_password import generate_password
 
 
@@ -55,3 +58,33 @@ class RegisterSerializer(serializers.ModelSerializer):
             phone_number=phone_number, password=password, language=language
         )
         return user
+    
+class VerifyCodeSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+    
+    def validate(self, attrs):
+        phone_number = attrs.get("phone_number")
+        code = attrs.get("code")
+        user = User.objects.filter(phone_number=phone_number).first()
+        if not user:
+            raise CustomException(
+                message_key="USER_NOT_FOUND"
+            )
+        verification = VerificationCode.objects.filter(user=user, code=code).first()
+        if not verification:
+            raise CustomException(
+                message_key="INVALID_VERIFICATION_CODE"
+            )
+        expires_at = verification.created_at + timedelta(
+            seconds=verification.expiration_seconds
+        )
+        if timezone.now() > expires_at:
+            verification.delete()
+            raise CustomException(message_key="VERIFICATION_CODE_EXPIRED")
+        verification.delete()
+        if not user.is_active():
+            user.is_active = True
+            user.save()
+        attrs["user"] = user
+        return attrs
