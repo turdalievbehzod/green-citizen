@@ -2,7 +2,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.shared.utils.custom_response import CustomResponse
-from apps.users.serializers.register import RegisterSerializer, VerifyCodeSerializer
+from apps.users.serializers.register import LoginSerializer, MeSerializer, ProfileUpdateSerializer, RegisterSerializer, ResendVerificationCodeSerializer, SetPasswordSerializer, UpdatePasswordSerializer, UpdatePhoneSerializer, VerifyCodeSerializer, VerifyUpdateCodeSerializer
 from apps.users.utils.verification_code import send_verification_code
 from apps.users.views.users import UserSerializer
 
@@ -65,26 +65,29 @@ class VerifyCodeAPIView(APIView):
 
 class ResendVerificationCodeAPIView(APIView):
     permission_classes = [AllowAny]
+    serializer_classes = [ResendVerificationCodeSerializer]
     
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
-    
+    serializer_classes = [LoginSerializer]
 class SetPasswordAPIView(APIView):
     permission_classes = [AllowAny]
+    serializer_classes = [SetPasswordSerializer]
 
 class UpdatePasswordAPIView(APIView):
     permission_classes = [AllowAny]
-    
+    serializer_classes = [UpdatePasswordSerializer]
 class MeAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_classes = [MeSerializer]
     
 class UpdatePhoneAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    serializer_classes = [UpdatePhoneSerializer]
 class VerifyUpdateCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
-class ProfileAPIView(APIView):
+    serializer_classes = [VerifyUpdateCodeSerializer]
+class ProfileUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    serializer_classes = [ProfileUpdateSerializer]
     

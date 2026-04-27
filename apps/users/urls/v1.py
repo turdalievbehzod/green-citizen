@@ -1,7 +1,7 @@
 from django.urls import path
 
 from apps.users.views.devices import UserDeviceListCreateAPIView, UserDeviceDestroyAPIView
-from apps.users.views.register import LoginAPIView, MeAPIView, ProfileAPIView, RegisterAPIView, ResendVerificationCodeAPIView, SetPasswordAPIView, UpdatePasswordAPIView, UpdatePhoneAPIView, VerifyCodeAPIView, VerifyUpdateCodeAPIView
+from apps.users.views.register import LoginAPIView, MeAPIView, ProfileUpdateAPIView, RegisterAPIView, ResendVerificationCodeAPIView, SetPasswordAPIView, UpdatePasswordAPIView, UpdatePhoneAPIView, VerifyCodeAPIView, VerifyUpdateCodeAPIView
 
 app_name = 'users'
 
@@ -25,7 +25,7 @@ urlpatterns = [
     # verify code and updated phone number body: { "phone_number": "1234567890", "code": "123456" }
     path('verify-update-code/', VerifyUpdateCodeAPIView.as_view(), name='verify-update-code'),
     # patch endpoint to update user data
-    path('', ProfileAPIView.as_view(), name='profile'),
+    path('profile/', ProfileUpdateAPIView.as_view(), name='profile'),
 
     # User devices management urls
     # create device and list of all user devices

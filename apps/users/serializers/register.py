@@ -82,9 +82,37 @@ class VerifyCodeSerializer(serializers.Serializer):
         if timezone.now() > expires_at:
             verification.delete()
             raise CustomException(message_key="VERIFICATION_CODE_EXPIRED")
+        
         verification.delete()
+        
         if not user.is_active():
             user.is_active = True
             user.save()
+            
         attrs["user"] = user
+        
         return attrs
+    
+class LoginSerializer(serializers.Serializer):
+    pass
+    
+class ResendVerificationCodeSerializer(serializers.Serializer):
+    pass
+
+class SetPasswordSerializer(serializers.Serializer):
+    pass
+
+class UpdatePasswordSerializer(serializers.Serializer):
+    pass
+
+class MeSerializer(serializers.ModelSerializer):
+    pass
+
+class UpdatePhoneSerializer(serializers.Serializer):
+    pass
+
+class VerifyUpdateCodeSerializer(serializers.Serializer):
+    pass
+
+class ProfileUpdateSerializer(serializers.Serializer):
+    pass
